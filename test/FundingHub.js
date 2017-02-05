@@ -8,11 +8,14 @@ contract('FundingHub', function(accounts) {
       var project = Project.at(projectAddress);
       if (project) {
         console.log("OnProjectCreated");
-
+        var balance = accounts[0].balance;
+        console.log("Initial balance: " + balance);
         fundingHub.contribute(projectAddress,10, {from:accounts[0]}).then(function() {
-          console.log("OnContribute and now refund");
+          var newBalance = accounts[0].balance;
+          console.log("Balance after contribute: " + balance);
           project.refund().then(function() {
-            console.log("Project refounded");
+            var newNewBalance = accounts[0].balance;
+            console.log("Balance after refund: " + newNewBalance);
           });
         });
       } else {
