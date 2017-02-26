@@ -1,0 +1,14 @@
+
+
+<div ng-init="getAllAccounts()">
+  <div>
+    <hr>Active Account: {{activeAccount}}</hr>
+  </div>
+  <br>
+  <div>
+    <select ng-model="activeAccount" ng-change="accountChanged(activeAccount)">
+      <option ng-repeat="account in accounts" value="{{account}}">{{account}}</option>
+    </select>
+    <button id="setAccount" ng-click="loginWithAccount()">Select account</button>
+  </div>
+</div>

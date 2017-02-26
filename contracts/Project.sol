@@ -27,7 +27,7 @@ contract Project {
   function Project(uint ammount, uint deadline, string title, string description) {
     projectData.owner = tx.origin;
     projectData.ammount = ammount;
-    projectData.deadline = now + deadline;
+    projectData.deadline = deadline;
     projectData.title = title;
     projectData.description = description;
     projectData.ammountRaised = 0;
@@ -38,16 +38,24 @@ contract Project {
     bIsRefunding = false;
   }
 
-  function fund(uint256 ammount) {
-    contributors[tx.origin] += ammount;
-    projectData.ammountRaised += ammount;
+  function fund(uint256 ammount) returns (bool success) {
+    if (projectData.active == false) return false;
+    if (now > projectData.deadline) {
+      projectData.active = false;
+      if (projectData.successfull == false) return refund();
+    } else {
+      contributors[tx.origin] += ammount;
+      projectData.ammountRaised += ammount;
 
-    if (projectData.ammountRaised >= projectData.ammount) {
-      payout();
+      if (projectData.ammountRaised >= projectData.ammount) {
+        return payout();
+      }
     }
+
+    return true;
   }
 
-  function payout() {
+  function payout() returns (bool success) {
     if (bIsPayingOut == false) {
       bIsPayingOut = true;
       projectData.active = false;
@@ -55,14 +63,17 @@ contract Project {
 
       if (projectData.owner.send(projectData.ammountRaised)) {
         OnPayout(projectData.ammountRaised);
+        return true;
       } else {
         // To notify a fail in payout
         bIsPayingOut = false;
       }
     }
+
+    return false;
   }
 
-  function refund() {
+  function refund() returns (bool success) {
     if (bIsRefunding == false) {
       bIsRefunding = true;
       uint iCount = contributorsIds.length;
@@ -71,21 +82,18 @@ contract Project {
         uint256 ammount = contributors[addressToRefund];
         if (addressToRefund.send(ammount)) {
           OnRefund(addressToRefund,ammount);
+          return true;
         } else {
           // To notify a fail in a refund
           bIsRefunding = false;
         }
       }
     }
+
+    return false;
   }
 
-  function() payable {
-    if (projectData.active == false) throw;
-    if (now > projectData.deadline) {
-      projectData.active = false;
-      if (projectData.successfull == false) refund();
-    } else {
-      fund(msg.value);
-    }
+  function() {
+    throw;
   }
 }
