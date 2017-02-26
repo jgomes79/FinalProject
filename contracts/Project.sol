@@ -44,15 +44,19 @@ contract Project {
       projectData.active = false;
       if (projectData.successfull == false) return refund();
     } else {
-      contributors[tx.origin] += ammount;
-      projectData.ammountRaised += ammount;
+      if (tx.origin.send(ammount)) {
+        contributors[tx.origin] += ammount;
+        projectData.ammountRaised += ammount;
 
-      if (projectData.ammountRaised >= projectData.ammount) {
-        return payout();
+        if (projectData.ammountRaised >= projectData.ammount) {
+          return payout();
+        }
+
+        return true;
       }
     }
 
-    return true;
+    return false;
   }
 
   function payout() returns (bool success) {
