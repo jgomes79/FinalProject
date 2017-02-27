@@ -29,7 +29,7 @@ contract FundingHub {
   function contribute(address projectAddress, uint256 ammount) payable {
     if (ammount <= 0) throw;
 
-    if (projects[projectAddress].fund(ammount)) {
+    if (projects[projectAddress].send(ammount)) {
       OnContribute(projectAddress,ammount);
     } else {
       OnContributeFail();

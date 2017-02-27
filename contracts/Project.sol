@@ -38,28 +38,16 @@ contract Project {
     bIsRefunding = false;
   }
 
-  function fund(uint256 ammount) returns (bool success) {
-    if (projectData.active == false) return false;
-    if (now > projectData.deadline) {
-      projectData.active = false;
-      if (projectData.successfull == false) return refund();
-    } else {
-      if (tx.origin.send(ammount)) {
-        contributors[tx.origin] += ammount;
-        projectData.ammountRaised += ammount;
+  function fund(uint256 ammount) {
+    contributors[tx.origin] += ammount;
+    projectData.ammountRaised += ammount;
 
-        if (projectData.ammountRaised >= projectData.ammount) {
-          return payout();
-        }
-
-        return true;
-      }
+    if (projectData.ammountRaised >= projectData.ammount) {
+      payout();
     }
-
-    return false;
   }
 
-  function payout() returns (bool success) {
+  function payout() {
     if (bIsPayingOut == false) {
       bIsPayingOut = true;
       projectData.active = false;
@@ -67,17 +55,14 @@ contract Project {
 
       if (projectData.owner.send(projectData.ammountRaised)) {
         OnPayout(projectData.ammountRaised);
-        return true;
       } else {
         // To notify a fail in payout
         bIsPayingOut = false;
       }
     }
-
-    return false;
   }
 
-  function refund() returns (bool success) {
+  function refund() {
     if (bIsRefunding == false) {
       bIsRefunding = true;
       uint iCount = contributorsIds.length;
@@ -86,18 +71,22 @@ contract Project {
         uint256 ammount = contributors[addressToRefund];
         if (addressToRefund.send(ammount)) {
           OnRefund(addressToRefund,ammount);
-          return true;
         } else {
           // To notify a fail in a refund
           bIsRefunding = false;
         }
       }
     }
-
-    return false;
   }
 
-  function() {
-    throw;
+  function() payable {
+    if (projectData.active) {
+      if (now > projectData.deadline) {
+        projectData.active = false;
+        if (projectData.successfull == false) refund();
+      } else {
+        fund(msg.value);
+      }
+    }
   }
 }
